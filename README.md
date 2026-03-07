@@ -1,11 +1,12 @@
 DASH playground
-Generate sample FFmpeg video:
+Generate sample 4k video FFmpeg video:
 
-`ffmpeg -f lavfi -i testsrc=size=1280x720:rate=30 -t 30 -c:v libx264 -pix_fmt yuv420p test.mp4`
+`ffmpeg -f lavfi -i testsrc=size=3840x2160:rate=60 -t 30 -c:v libx264 -pix_fmt yuv420p test.mp4`
 
-Generate multiple downsampled videos from it:
+Generate multiple downsampled videos from it with mpd:
 
-`ffmpeg -i test.mp4 -filter_complex "[0:v]split=3[v1][v2][v3]" -map "[v1]" -c:v:0 libx264 -b:v:0 800k -s:v:0 640x360 -map "[v2]" -c:v:1 libx264 -b:v:1 1500k -s:v:1 1280x720 -map "[v3]" -c:v:2 libx264 -b:v:2 3000k -s:v:2 1920x1080 -map 0:a? -c:a aac -b:a 128k -use_timeline 1 -use_template 1 -adaptation_sets "id=0,streams=v id=1,streams=a" -seg_duration 4 -f dash stream.mpd`
+`./downscale_video.sh test.mp4`
+
 
 Run simple http server using Python within the directory:
 
