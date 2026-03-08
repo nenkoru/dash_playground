@@ -1,0 +1,73 @@
+# deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dash-demo
+  labels:
+    app: dash-demo
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: dash-demo
+  template:
+    metadata:
+      labels:
+        app: dash-demo
+    spec:
+      imagePullSecrets:
+        - name: forgejo-registry
+      containers:
+      - name: nginx
+        image: git.bayfut.net/nenkoru/dash-demo:latest
+        ports:
+        - containerPort: 80
+          name: http
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "100Mi"
+          limits:
+            cpu: "200m"
+            memory: "200Mi"
+---
+# service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: dash-demo-svc
+spec:
+  selector:
+    app: dash-demo
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+      name: http
+  type: ClusterIP
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: dash-demo-ingress
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;
+spec:
+  tls:
+  - hosts:
+    - dashpg.demo.pi.nenkoru.com
+    secretName: dashpg-demo-tls  # This will be auto-created by cert-manager
+  rules:
+    - host: dashpg.demo.pi.nenkoru.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: dash-demo-svc
+                port:
+                  number: 80
